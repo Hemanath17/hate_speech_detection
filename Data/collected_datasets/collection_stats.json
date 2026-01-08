@@ -1,0 +1,10 @@
+{
+  "total_samples": 24783,
+  "hate_speech_ratio": 0.8320219505306057,
+  "sources": {
+    "davidson": 24783
+  },
+  "languages": {
+    "eng": 24783
+  }
+}

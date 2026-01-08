@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Hate Speech Detector</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <div class="header">
+            <h1>🛡️ Hate Speech Detector</h1>
+            <p class="subtitle">Real-time detection for 5 languages</p>
+        </div>
+
+        <div class="status-section">
+            <div class="status-item">
+                <span class="status-label">Status:</span>
+                <span id="status" class="status-value">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">API:</span>
+                <span id="apiStatus" class="status-value">Checking...</span>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <label class="toggle-switch">
+                <input type="checkbox" id="enableToggle" checked>
+                <span class="slider"></span>
+                <span class="toggle-label">Enable Detection</span>
+            </label>
+        </div>
+
+        <div class="stats-section">
+            <h3>Statistics</h3>
+            <div class="stat-item">
+                <span>Detections Today:</span>
+                <span id="detectionCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Languages Supported:</span>
+                <span>5 (EN, TA, HI, ZH, ES)</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button id="settingsBtn" class="btn-secondary">Settings</button>
+            <button id="testBtn" class="btn-primary">Test Detection</button>
+        </div>
+
+        <div id="testSection" class="test-section hidden">
+            <h3>Test Detection</h3>
+            <textarea id="testInput" placeholder="Enter text to test..."></textarea>
+            <button id="testSubmit" class="btn-primary">Test</button>
+            <div id="testResult" class="test-result"></div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
+

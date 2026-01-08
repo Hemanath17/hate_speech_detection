@@ -1,0 +1,17 @@
+{
+  "total_samples": 30526,
+  "hate_speech_ratio": 0.7010744938740746,
+  "languages": {
+    "eng": 25781,
+    "spa": 1404,
+    "hin": 1301,
+    "cmn": 1294,
+    "tam": 746
+  },
+  "sources": {
+    "davidson": 24783,
+    "synthetic_neutral": 801,
+    "synthetic_hate": 133
+  },
+  "target_samples_per_language": 5000
+}
