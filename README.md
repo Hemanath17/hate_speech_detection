@@ -601,27 +601,5 @@ Training parameters can be adjusted in the script or via configuration files.
 - **High memory usage**: Reduce batch size or use smaller model variant
 - **Extension lag**: Increase debounce delay in content script
 
-## Future Enhancements
 
-- Support for additional languages
-- Multi-label classification (8 hate speech categories)
-- Real-time model updates
-- Cloud deployment options
-- Mobile app integration
-- Advanced analytics dashboard
-
-## Acknowledgments
-
-- Hugging Face for transformer models and libraries
-- ETHOS, Davidson, HateXplain, and OLID dataset creators
-- Tatoeba project for multilingual data
-- Open source community for tools and libraries
-
-## Contact
-
-For questions, issues, or contributions, please open an issue on GitHub.
-
----
-
-**Note**: This system is designed for content moderation assistance. Final moderation decisions should involve human review, especially for borderline cases. The system is not intended to replace human moderators but to augment their capabilities.
 
