@@ -2,23 +2,7 @@
 
 A comprehensive, production-ready hate speech detection system that identifies and categorizes harmful content across five languages: English, Tamil, Hindi, Chinese (Mandarin), and Spanish. This system leverages state-of-the-art transformer models to achieve high accuracy in detecting hate speech across diverse linguistic and cultural contexts.
 
-## Table of Contents
 
-- [About the Project](#about-the-project)
-- [Why Hate Speech Detection is Needed](#why-hate-speech-detection-is-needed)
-- [Project Overview](#project-overview)
-- [How It Works](#how-it-works)
-- [Features](#features)
-- [Technical Architecture](#technical-architecture)
-- [Technology Stack](#technology-stack)
-- [NLP Algorithms and Models](#nlp-algorithms-and-models)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Performance Metrics](#performance-metrics)
-- [Browser Extension](#browser-extension)
-- [API Documentation](#api-documentation)
-- [Contributing](#contributing)
 
 ## About the Project
 
@@ -29,6 +13,10 @@ The system is designed to handle the complexities of multilingual content, inclu
 ## Why Hate Speech Detection is Needed
 
 Hate speech poses significant threats to online communities and society at large:
+
+![Hate Speech Detection Example](sample.png)
+
+*Example: Real-time hate speech detection on Reddit comments with word-level highlighting*
 
 1. **Psychological Impact**: Hate speech can cause severe emotional distress, anxiety, and trauma to targeted individuals and communities.
 
@@ -601,27 +589,4 @@ Training parameters can be adjusted in the script or via configuration files.
 - **High memory usage**: Reduce batch size or use smaller model variant
 - **Extension lag**: Increase debounce delay in content script
 
-## Future Enhancements
-
-- Support for additional languages
-- Multi-label classification (8 hate speech categories)
-- Real-time model updates
-- Cloud deployment options
-- Mobile app integration
-- Advanced analytics dashboard
-
-## Acknowledgments
-
-- Hugging Face for transformer models and libraries
-- ETHOS, Davidson, HateXplain, and OLID dataset creators
-- Tatoeba project for multilingual data
-- Open source community for tools and libraries
-
-## Contact
-
-For questions, issues, or contributions, please open an issue on GitHub.
-
----
-
-**Note**: This system is designed for content moderation assistance. Final moderation decisions should involve human review, especially for borderline cases. The system is not intended to replace human moderators but to augment their capabilities.
 

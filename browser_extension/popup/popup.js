@@ -85,13 +85,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkAPIHealth() {
         try {
-            const response = await fetch('http://localhost:5000/health');
+            const response = await fetch('http://localhost:5000/health', {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
             apiStatusEl.textContent = data.status === 'healthy' ? 'Connected' : 'Error';
             apiStatusEl.className = data.status === 'healthy' ? 'status-value active' : 'status-value error';
+            apiStatusEl.title = data.status === 'healthy' ? 'API server is running' : 'API server returned an error';
         } catch (error) {
-            apiStatusEl.textContent = 'Disconnected';
+            apiStatusEl.textContent = 'Not Running';
             apiStatusEl.className = 'status-value error';
+            apiStatusEl.title = 'API server is not running. Start it with: python src/api/app.py or ./start_api.sh';
+            
+            // Show helpful message in popup
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'api-error-message';
+            errorMsg.innerHTML = `
+                <p style="color: #d32f2f; font-size: 12px; margin-top: 10px; padding: 8px; background: #ffebee; border-radius: 4px;">
+                    <strong>API Server Not Running</strong><br>
+                    To start the server, run in terminal:<br>
+                    <code style="background: #fff; padding: 2px 4px; border-radius: 2px;">python src/api/app.py</code>
+                </p>
+            `;
+            
+            // Remove existing error message if any
+            const existing = document.querySelector('.api-error-message');
+            if (existing) existing.remove();
+            
+            // Insert after API status
+            apiStatusEl.parentElement.appendChild(errorMsg);
         }
     }
 

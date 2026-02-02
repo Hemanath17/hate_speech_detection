@@ -20,18 +20,29 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Enable CORS for browser extension with proper headers
+# Enable CORS for browser extension with proper headers - allow all origins
 CORS(app, resources={
     r"/api/*": {
         "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Accept", "Authorization"]
     },
     r"/health": {
         "origins": "*",
-        "methods": ["GET", "OPTIONS"]
+        "methods": ["GET", "OPTIONS", "POST"],
+        "allow_headers": ["Content-Type", "Accept"]
     }
 })
+# Also set CORS headers globally as fallback
+@app.after_request
+def after_request(response):
+    """Add CORS headers to all responses"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'false')
+    response.headers.add('Access-Control-Max-Age', '3600')
+    return response
 
 # Global model and tokenizer
 model = None
@@ -58,12 +69,12 @@ class HateSpeechDetector:
             'eng': re.compile(r'^[a-zA-Z\s\.,!?;:\'"-]+$')  # English (fallback)
         }
         
-        # Strong hate keywords for override
+        # Strong hate keywords for override and word-level detection
         self.strong_hate_keywords = [
-            'stupid', 'worthless', 'idiot', 'moron', 'fool', 'dumb',
-            'hate', 'kill', 'die', 'death', 'murder',
-            'useless', 'trash', 'garbage', 'scum', 'filth',
-            'retard', 'retarded', 'imbecile'
+            'kill', 'death', 'murder', 'hate you', 'i hate', 'stupid', 'worthless',
+            'idiot', 'moron', 'fool', 'dumb', 'useless', 'trash', 'garbage', 'scum',
+            'fuck', 'fucking', 'fuck you', 'fuck off', 'bitch', 'bastard', 'asshole',
+            'shit', 'crap', 'retard', 'retarded', 'imbecile', 'damn'
         ]
     
     def load_model(self):
@@ -80,31 +91,29 @@ class HateSpeechDetector:
             raise
     
     def load_thresholds(self):
-        """Load language-specific thresholds"""
+        """Load language-specific thresholds from file or use defaults"""
         thresholds_path = 'models/optimized_thresholds.json'
+        default_thresholds = {
+            'eng': 0.30,
+            'tam': 0.1,
+            'hin': 0.35,
+            'spa': 0.40,
+            'cmn': 0.35
+        }
+        
         if os.path.exists(thresholds_path):
             try:
                 with open(thresholds_path, 'r') as f:
-                    self.thresholds = json.load(f)
-                # Lower English threshold for better detection
-                self.thresholds['eng'] = min(self.thresholds.get('eng', 0.65), 0.40)
+                    loaded_thresholds = json.load(f)
+                # Use loaded thresholds, but ensure all languages have values
+                self.thresholds = {**default_thresholds, **loaded_thresholds}
                 logger.info(f"✓ Loaded thresholds: {self.thresholds}")
-            except:
-                self.thresholds = {
-                    'eng': 0.40,
-                    'tam': 0.1,
-                    'hin': 0.50,
-                    'spa': 0.60,
-                    'cmn': 0.45
-                }
+            except Exception as e:
+                logger.warn(f"Failed to load thresholds from file: {e}, using defaults")
+                self.thresholds = default_thresholds
         else:
-            self.thresholds = {
-                'eng': 0.40,
-                'tam': 0.1,
-                'hin': 0.50,
-                'spa': 0.60,
-                'cmn': 0.45
-            }
+            self.thresholds = default_thresholds
+            logger.info(f"Using default thresholds: {self.thresholds}")
     
     def detect_language(self, text: str) -> str:
         """Detect the language of the input text"""
@@ -136,6 +145,93 @@ class HateSpeechDetector:
         """Check for strong hate keywords"""
         text_lower = text.lower()
         return any(word in text_lower for word in self.strong_hate_keywords)
+    
+    def _identify_hate_words(self, text: str, hate_probability: float) -> list:
+        """Identify specific words/phrases that are hateful"""
+        import re
+        hate_words = []
+        text_lower = text.lower()
+        
+        # Check for strong hate keywords (use word boundaries to avoid false positives)
+        for keyword in self.strong_hate_keywords:
+            # Use word boundaries for single words, but allow phrases
+            if len(keyword.split()) == 1:
+                # Single word - use word boundary
+                pattern = re.compile(r'\b' + re.escape(keyword) + r'\b', re.IGNORECASE)
+            else:
+                # Phrase - match as is
+                pattern = re.compile(re.escape(keyword), re.IGNORECASE)
+            
+            matches = pattern.finditer(text)
+            for match in matches:
+                # Double check it's not part of a larger word
+                matched_word = match.group()
+                start = match.start()
+                end = match.end()
+                
+                # Verify it's actually the keyword (not part of another word)
+                if len(keyword.split()) == 1:
+                    # Check character before and after
+                    if (start > 0 and text[start-1].isalnum()) or \
+                       (end < len(text) and text[end].isalnum()):
+                        continue  # Skip if part of larger word
+                
+                hate_words.append({
+                    'word': matched_word,
+                    'start': start,
+                    'end': end,
+                    'type': 'strong_keyword',
+                    'confidence': 'high'
+                })
+        
+        # If hate probability is high, analyze sentence structure
+        if hate_probability > 0.5:
+            # Look for insult patterns
+            insult_patterns = [
+                r'\b(you|u)\s+(are|r)\s+(stupid|dumb|idiot|worthless|useless)\b',
+                r'\b(you|u)\s+(should|need to)\s+(die|kill yourself|go away)\b',
+                r'\b(i|I)\s+hate\s+(you|u|your)\b',
+                r'\b(fuck|fucking)\s+(you|off|yourself)\b',
+            ]
+            
+            for pattern in insult_patterns:
+                matches = re.finditer(pattern, text_lower)
+                for match in matches:
+                    # Find original case version
+                    orig_match = re.search(re.escape(match.group()), text, re.IGNORECASE)
+                    if orig_match:
+                        hate_words.append({
+                            'word': orig_match.group(),
+                            'start': orig_match.start(),
+                            'end': orig_match.end(),
+                            'type': 'insult_pattern',
+                            'confidence': 'high' if hate_probability > 0.7 else 'medium'
+                        })
+        
+        # Remove duplicates and overlapping words (keep longer phrases)
+        # Sort by length (longest first) then by position
+        sorted_words = sorted(hate_words, key=lambda x: (x['end'] - x['start'], -x['start']), reverse=True)
+        
+        unique_words = []
+        seen_positions = set()
+        
+        for word_info in sorted_words:
+            # Check if this word overlaps with any already added word
+            overlaps = False
+            for start, end in seen_positions:
+                # Check if word_info overlaps with (start, end)
+                if not (word_info['end'] <= start or word_info['start'] >= end):
+                    overlaps = True
+                    break
+            
+            if not overlaps:
+                unique_words.append(word_info)
+                seen_positions.add((word_info['start'], word_info['end']))
+        
+        # Sort by position for final output
+        unique_words.sort(key=lambda x: x['start'])
+        
+        return unique_words
     
     def predict(self, text: str, language: str = None) -> dict:
         """Predict if text is hate speech"""
@@ -187,16 +283,23 @@ class HateSpeechDetector:
             # Get threshold
             threshold = self.thresholds.get(language, 0.5)
             
-            # Check for strong keywords
+            # Check for strong keywords (minimal, only extreme cases)
             has_strong_keywords = self.has_strong_hate_keywords(text)
             
-            # Decision logic
-            if has_strong_keywords and hate_probability > 0.25:
+            # Decision logic - rely primarily on model, use lower threshold
+            # Only override for extreme cases (kill, murder, etc.)
+            if has_strong_keywords and hate_probability > 0.20:
                 is_hate = True
-                confidence = max(hate_probability, 0.5)
+                confidence = max(hate_probability, 0.6)
             else:
+                # Let model decide with lower threshold
                 is_hate = hate_probability >= threshold
                 confidence = hate_probability if is_hate else neutral_probability
+            
+            # Identify specific hate words
+            hate_words = []
+            if is_hate:
+                hate_words = self._identify_hate_words(text, hate_probability)
             
             return {
                 'is_hate': is_hate,
@@ -205,7 +308,8 @@ class HateSpeechDetector:
                 'neutral_probability': neutral_probability,
                 'language': language,
                 'threshold_used': threshold,
-                'keyword_override': has_strong_keywords
+                'keyword_override': has_strong_keywords,
+                'hate_words': hate_words
             }
             
         except Exception as e:
@@ -315,26 +419,37 @@ def initialize_model():
         raise
 
 
-@app.after_request
-def after_request(response):
-    """Add CORS headers to all responses"""
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'false')
-    response.headers.add('Access-Control-Max-Age', '3600')
-    return response
-
-
 if __name__ == '__main__':
     # Initialize model
     initialize_model()
     
-    # Run server
+    # Run server - try port 5000, if busy try 5001
     port = int(os.environ.get('PORT', 5000))
+    
+    # Check if port is available, if not try 5001
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('127.0.0.1', port))
+    sock.close()
+    
+    if result == 0:
+        # Port is in use, try 5001
+        logger.warn(f"Port {port} is in use, trying port 5001...")
+        port = 5001
+        # Update API URL in config if needed
+        os.environ['PORT'] = str(port)
+    
     logger.info(f"Starting server on port {port}...")
     logger.info(f"API will be available at http://localhost:{port}")
     logger.info(f"Health check: http://localhost:{port}/health")
     logger.info(f"Detection endpoint: http://localhost:{port}/api/detect")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    
+    try:
+        app.run(host='0.0.0.0', port=port, debug=False)
+    except OSError as e:
+        if "Address already in use" in str(e):
+            logger.error(f"Port {port} is still in use. Please stop the process using it or use a different port.")
+            logger.error("On macOS, you may need to disable AirPlay Receiver in System Settings.")
+            logger.error("Or kill the process: kill -9 $(lsof -ti:{port})")
+        raise
 

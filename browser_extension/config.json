@@ -1,0 +1,21 @@
+{
+  "api": {
+    "url": "http://localhost:5000",
+    "detectEndpoint": "/api/detect",
+    "healthEndpoint": "/health",
+    "timeout": 5000
+  },
+  "detection": {
+    "debounceDelay": 500,
+    "minTextLength": 3,
+    "maxTextLength": 2000
+  },
+  "thresholds": {
+    "eng": 0.30,
+    "tam": 0.1,
+    "hin": 0.35,
+    "spa": 0.40,
+    "cmn": 0.35
+  }
+}
+

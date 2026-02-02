@@ -135,12 +135,45 @@
 
 /* Comment section highlighting */
 .hate-speech-comment {
-    background-color: rgba(255, 0, 0, 0.1) !important;
-    border-left: 4px solid #ff0000 !important;
-    padding: 8px 12px !important;
-    margin: 4px 0 !important;
-    border-radius: 4px !important;
+    background-color: rgba(255, 0, 0, 0.2) !important;
+    border: 3px solid #ff0000 !important;
+    border-left: 6px solid #ff0000 !important;
+    padding: 10px !important;
+    margin: 8px 0 !important;
+    border-radius: 6px !important;
     position: relative !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3) !important;
+}
+
+/* YouTube-specific comment highlighting - Very aggressive */
+ytd-comment-renderer.hate-speech-comment,
+ytd-comment-renderer[data-hate-speech-highlighted="true"] {
+    background-color: rgba(255, 0, 0, 0.2) !important;
+    border: 3px solid #ff0000 !important;
+    border-left: 6px solid #ff0000 !important;
+    padding: 10px !important;
+    margin: 8px 0 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3) !important;
+}
+
+/* YouTube comment content area */
+ytd-comment-renderer[data-hate-speech-highlighted="true"] #comment-content,
+ytd-comment-renderer[data-hate-speech-highlighted="true"] #content,
+ytd-comment-renderer[data-hate-speech-highlighted="true"] #body {
+    background-color: rgba(255, 0, 0, 0.15) !important;
+    padding: 8px !important;
+    border-radius: 4px !important;
+}
+
+/* YouTube comment text */
+ytd-comment-renderer[data-hate-speech-highlighted="true"] #content-text,
+ytd-comment-renderer[data-hate-speech-highlighted="true"] yt-formatted-string#content-text {
+    background-color: rgba(255, 0, 0, 0.3) !important;
+    color: #000 !important;
+    padding: 4px 6px !important;
+    border-radius: 3px !important;
+    font-weight: 500 !important;
 }
 
 .hate-speech-comment-badge {
@@ -162,5 +195,43 @@
     padding: 2px 4px !important;
     border-radius: 2px !important;
     font-weight: 500 !important;
+}
+
+/* Individual hate word highlighting - Red boxes */
+.hate-word-highlight {
+    background-color: #ff0000 !important;
+    color: #ffffff !important;
+    padding: 2px 6px !important;
+    border: 2px solid #cc0000 !important;
+    border-radius: 4px !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    margin: 0 1px !important;
+    box-shadow: 0 2px 4px rgba(255, 0, 0, 0.4) !important;
+    cursor: help !important;
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.hate-word-highlight:hover {
+    background-color: #cc0000 !important;
+    border-color: #990000 !important;
+    box-shadow: 0 3px 6px rgba(255, 0, 0, 0.6) !important;
+    transform: scale(1.05) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Reddit-specific hate word highlighting */
+shreddit-comment .hate-word-highlight,
+[data-testid="comment"] .hate-word-highlight,
+.Comment .hate-word-highlight {
+    background-color: #ff0000 !important;
+    color: #ffffff !important;
+    padding: 3px 8px !important;
+    border: 3px solid #cc0000 !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: inherit !important;
+    box-shadow: 0 2px 6px rgba(255, 0, 0, 0.5) !important;
 }
 
